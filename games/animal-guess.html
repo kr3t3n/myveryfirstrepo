@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animal Guess - Arcade</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: white;
+            padding: 20px;
+        }
+
+        .game-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .back-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            text-decoration: none;
+            transition: background 0.2s;
+            margin-bottom: 20px;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .game-header {
+            text-align: center;
+            background: linear-gradient(145deg, #1e1e30, #2a2a40);
+            padding: 25px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 0.95rem;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 15px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #48dbfb;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .input-section {
+            background: linear-gradient(145deg, #1e1e30, #2a2a40);
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 10px;
+        }
+
+        #guess-input {
+            flex: 1;
+            padding: 15px;
+            font-size: 1rem;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        #guess-input:focus {
+            border-color: #48dbfb;
+        }
+
+        #guess-input::placeholder {
+            color: #666;
+        }
+
+        .guess-btn {
+            padding: 15px 25px;
+            font-size: 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .guess-btn:hover:not(:disabled) {
+            transform: scale(1.05);
+        }
+
+        .guess-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .suggestions {
+            position: relative;
+        }
+
+        .suggestions-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #2a2a40;
+            border-radius: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .suggestions-list.show {
+            display: block;
+        }
+
+        .suggestion-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: background 0.2s;
+        }
+
+        .suggestion-item:hover {
+            background: rgba(72, 219, 251, 0.2);
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .taxonomy-tree {
+            background: linear-gradient(145deg, #1e1e30, #2a2a40);
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+        }
+
+        .taxonomy-title {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: #888;
+        }
+
+        .taxonomy-level {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            margin: 5px 0;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+        }
+
+        .taxonomy-level.revealed {
+            background: rgba(72, 219, 251, 0.2);
+            border-left: 4px solid #48dbfb;
+        }
+
+        .taxonomy-level.match {
+            background: rgba(76, 175, 80, 0.2);
+            border-left: 4px solid #4CAF50;
+        }
+
+        .level-name {
+            width: 80px;
+            font-size: 0.85rem;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .level-value {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .level-value.hidden {
+            color: #555;
+        }
+
+        .guesses-section {
+            background: linear-gradient(145deg, #1e1e30, #2a2a40);
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+        }
+
+        .guesses-title {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: #888;
+        }
+
+        .guess-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            margin: 8px 0;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .guess-animal {
+            font-weight: 500;
+        }
+
+        .guess-match {
+            font-size: 0.85rem;
+            padding: 5px 12px;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .guess-match.high {
+            background: rgba(76, 175, 80, 0.3);
+            color: #4CAF50;
+        }
+
+        .guess-match.medium {
+            background: rgba(254, 202, 87, 0.3);
+            color: #feca57;
+        }
+
+        .guess-match.low {
+            background: rgba(255, 107, 107, 0.3);
+            color: #ff6b6b;
+        }
+
+        .game-over {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(145deg, #1e1e30, #2a2a40);
+            border-radius: 20px;
+            margin-bottom: 20px;
+        }
+
+        .game-over h2 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .game-over.win h2 {
+            color: #4CAF50;
+        }
+
+        .game-over.lose h2 {
+            color: #ff6b6b;
+        }
+
+        .game-over p {
+            color: #888;
+            margin-bottom: 20px;
+        }
+
+        .answer-reveal {
+            font-size: 1.3rem;
+            color: #48dbfb;
+            margin: 15px 0;
+        }
+
+        .new-game-btn {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .new-game-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .input-wrapper {
+                flex-direction: column;
+            }
+
+            .guess-btn {
+                width: 100%;
+            }
+
+            .stats {
+                gap: 20px;
+            }
+
+            .level-name {
+                width: 60px;
+                font-size: 0.75rem;
+            }
+
+            .taxonomy-level {
+                padding: 8px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <a href="../index.html" class="back-btn">← Back</a>
+
+        <div class="game-header">
+            <h1>Animal Guess</h1>
+            <p class="subtitle">Guess the mystery animal using taxonomy clues!</p>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value" id="guesses-left">10</div>
+                    <div class="stat-label">Guesses Left</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="streak">0</div>
+                    <div class="stat-label">Win Streak</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-section" id="input-section">
+            <div class="suggestions">
+                <div class="input-wrapper">
+                    <input type="text" id="guess-input" placeholder="Type an animal name..." autocomplete="off">
+                    <button class="guess-btn" id="guess-btn">Guess</button>
+                </div>
+                <div class="suggestions-list" id="suggestions"></div>
+            </div>
+        </div>
+
+        <div class="taxonomy-tree">
+            <div class="taxonomy-title">Taxonomy Tree</div>
+            <div class="taxonomy-level" id="level-kingdom">
+                <span class="level-name">Kingdom</span>
+                <span class="level-value hidden" id="val-kingdom">???</span>
+            </div>
+            <div class="taxonomy-level" id="level-phylum">
+                <span class="level-name">Phylum</span>
+                <span class="level-value hidden" id="val-phylum">???</span>
+            </div>
+            <div class="taxonomy-level" id="level-class">
+                <span class="level-name">Class</span>
+                <span class="level-value hidden" id="val-class">???</span>
+            </div>
+            <div class="taxonomy-level" id="level-order">
+                <span class="level-name">Order</span>
+                <span class="level-value hidden" id="val-order">???</span>
+            </div>
+            <div class="taxonomy-level" id="level-family">
+                <span class="level-name">Family</span>
+                <span class="level-value hidden" id="val-family">???</span>
+            </div>
+            <div class="taxonomy-level" id="level-genus">
+                <span class="level-name">Genus</span>
+                <span class="level-value hidden" id="val-genus">???</span>
+            </div>
+        </div>
+
+        <div class="guesses-section" id="guesses-section">
+            <div class="guesses-title">Your Guesses</div>
+            <div id="guesses-list"></div>
+        </div>
+
+        <div class="game-over hidden" id="game-over">
+            <h2 id="game-over-title">Game Over</h2>
+            <p id="game-over-message"></p>
+            <div class="answer-reveal" id="answer-reveal"></div>
+            <button class="new-game-btn" id="new-game-btn">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // Animal database with taxonomy
+        const animals = [
+            { name: "Lion", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Carnivora", family: "Felidae", genus: "Panthera" },
+            { name: "Tiger", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Carnivora", family: "Felidae", genus: "Panthera" },
+            { name: "House Cat", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Carnivora", family: "Felidae", genus: "Felis" },
+            { name: "Cheetah", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Carnivora", family: "Felidae", genus: "Acinonyx" },
+            { name: "Leopard", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Carnivora", family: "Felidae", genus: "Panthera" },
+            { name: "Wolf", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Carnivora", family: "Canidae", genus: "Canis" },
+            { name: "Dog", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Carnivora", family: "Canidae", genus: "Canis" },
+            { name: "Fox", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Carnivora", family: "Canidae", genus: "Vulpes" },
+            { name: "Bear", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Carnivora", family: "Ursidae", genus: "Ursus" },
+            { name: "Polar Bear", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Carnivora", family: "Ursidae", genus: "Ursus" },
+            { name: "Elephant", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Proboscidea", family: "Elephantidae", genus: "Elephas" },
+            { name: "Horse", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Perissodactyla", family: "Equidae", genus: "Equus" },
+            { name: "Zebra", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Perissodactyla", family: "Equidae", genus: "Equus" },
+            { name: "Rhino", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Perissodactyla", family: "Rhinocerotidae", genus: "Rhinoceros" },
+            { name: "Cow", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Artiodactyla", family: "Bovidae", genus: "Bos" },
+            { name: "Sheep", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Artiodactyla", family: "Bovidae", genus: "Ovis" },
+            { name: "Goat", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Artiodactyla", family: "Bovidae", genus: "Capra" },
+            { name: "Deer", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Artiodactyla", family: "Cervidae", genus: "Cervus" },
+            { name: "Giraffe", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Artiodactyla", family: "Giraffidae", genus: "Giraffa" },
+            { name: "Pig", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Artiodactyla", family: "Suidae", genus: "Sus" },
+            { name: "Hippo", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Artiodactyla", family: "Hippopotamidae", genus: "Hippopotamus" },
+            { name: "Whale", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Cetacea", family: "Balaenopteridae", genus: "Balaenoptera" },
+            { name: "Dolphin", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Cetacea", family: "Delphinidae", genus: "Delphinus" },
+            { name: "Bat", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Chiroptera", family: "Vespertilionidae", genus: "Myotis" },
+            { name: "Rabbit", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Lagomorpha", family: "Leporidae", genus: "Oryctolagus" },
+            { name: "Mouse", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Rodentia", family: "Muridae", genus: "Mus" },
+            { name: "Rat", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Rodentia", family: "Muridae", genus: "Rattus" },
+            { name: "Squirrel", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Rodentia", family: "Sciuridae", genus: "Sciurus" },
+            { name: "Beaver", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Rodentia", family: "Castoridae", genus: "Castor" },
+            { name: "Monkey", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Primates", family: "Cercopithecidae", genus: "Macaca" },
+            { name: "Gorilla", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Primates", family: "Hominidae", genus: "Gorilla" },
+            { name: "Chimpanzee", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Primates", family: "Hominidae", genus: "Pan" },
+            { name: "Orangutan", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Primates", family: "Hominidae", genus: "Pongo" },
+            { name: "Kangaroo", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Diprotodontia", family: "Macropodidae", genus: "Macropus" },
+            { name: "Koala", kingdom: "Animalia", phylum: "Chordata", class: "Mammalia", order: "Diprotodontia", family: "Phascolarctidae", genus: "Phascolarctos" },
+            { name: "Eagle", kingdom: "Animalia", phylum: "Chordata", class: "Aves", order: "Accipitriformes", family: "Accipitridae", genus: "Aquila" },
+            { name: "Hawk", kingdom: "Animalia", phylum: "Chordata", class: "Aves", order: "Accipitriformes", family: "Accipitridae", genus: "Buteo" },
+            { name: "Owl", kingdom: "Animalia", phylum: "Chordata", class: "Aves", order: "Strigiformes", family: "Strigidae", genus: "Bubo" },
+            { name: "Penguin", kingdom: "Animalia", phylum: "Chordata", class: "Aves", order: "Sphenisciformes", family: "Spheniscidae", genus: "Aptenodytes" },
+            { name: "Parrot", kingdom: "Animalia", phylum: "Chordata", class: "Aves", order: "Psittaciformes", family: "Psittacidae", genus: "Ara" },
+            { name: "Chicken", kingdom: "Animalia", phylum: "Chordata", class: "Aves", order: "Galliformes", family: "Phasianidae", genus: "Gallus" },
+            { name: "Duck", kingdom: "Animalia", phylum: "Chordata", class: "Aves", order: "Anseriformes", family: "Anatidae", genus: "Anas" },
+            { name: "Swan", kingdom: "Animalia", phylum: "Chordata", class: "Aves", order: "Anseriformes", family: "Anatidae", genus: "Cygnus" },
+            { name: "Flamingo", kingdom: "Animalia", phylum: "Chordata", class: "Aves", order: "Phoenicopteriformes", family: "Phoenicopteridae", genus: "Phoenicopterus" },
+            { name: "Crow", kingdom: "Animalia", phylum: "Chordata", class: "Aves", order: "Passeriformes", family: "Corvidae", genus: "Corvus" },
+            { name: "Sparrow", kingdom: "Animalia", phylum: "Chordata", class: "Aves", order: "Passeriformes", family: "Passeridae", genus: "Passer" },
+            { name: "Crocodile", kingdom: "Animalia", phylum: "Chordata", class: "Reptilia", order: "Crocodilia", family: "Crocodylidae", genus: "Crocodylus" },
+            { name: "Alligator", kingdom: "Animalia", phylum: "Chordata", class: "Reptilia", order: "Crocodilia", family: "Alligatoridae", genus: "Alligator" },
+            { name: "Turtle", kingdom: "Animalia", phylum: "Chordata", class: "Reptilia", order: "Testudines", family: "Testudinidae", genus: "Testudo" },
+            { name: "Snake", kingdom: "Animalia", phylum: "Chordata", class: "Reptilia", order: "Squamata", family: "Colubridae", genus: "Coluber" },
+            { name: "Cobra", kingdom: "Animalia", phylum: "Chordata", class: "Reptilia", order: "Squamata", family: "Elapidae", genus: "Naja" },
+            { name: "Python", kingdom: "Animalia", phylum: "Chordata", class: "Reptilia", order: "Squamata", family: "Pythonidae", genus: "Python" },
+            { name: "Lizard", kingdom: "Animalia", phylum: "Chordata", class: "Reptilia", order: "Squamata", family: "Lacertidae", genus: "Lacerta" },
+            { name: "Gecko", kingdom: "Animalia", phylum: "Chordata", class: "Reptilia", order: "Squamata", family: "Gekkonidae", genus: "Gekko" },
+            { name: "Iguana", kingdom: "Animalia", phylum: "Chordata", class: "Reptilia", order: "Squamata", family: "Iguanidae", genus: "Iguana" },
+            { name: "Frog", kingdom: "Animalia", phylum: "Chordata", class: "Amphibia", order: "Anura", family: "Ranidae", genus: "Rana" },
+            { name: "Toad", kingdom: "Animalia", phylum: "Chordata", class: "Amphibia", order: "Anura", family: "Bufonidae", genus: "Bufo" },
+            { name: "Salamander", kingdom: "Animalia", phylum: "Chordata", class: "Amphibia", order: "Urodela", family: "Salamandridae", genus: "Salamandra" },
+            { name: "Shark", kingdom: "Animalia", phylum: "Chordata", class: "Chondrichthyes", order: "Lamniformes", family: "Lamnidae", genus: "Carcharodon" },
+            { name: "Salmon", kingdom: "Animalia", phylum: "Chordata", class: "Actinopterygii", order: "Salmoniformes", family: "Salmonidae", genus: "Salmo" },
+            { name: "Goldfish", kingdom: "Animalia", phylum: "Chordata", class: "Actinopterygii", order: "Cypriniformes", family: "Cyprinidae", genus: "Carassius" },
+            { name: "Tuna", kingdom: "Animalia", phylum: "Chordata", class: "Actinopterygii", order: "Scombriformes", family: "Scombridae", genus: "Thunnus" },
+            { name: "Octopus", kingdom: "Animalia", phylum: "Mollusca", class: "Cephalopoda", order: "Octopoda", family: "Octopodidae", genus: "Octopus" },
+            { name: "Squid", kingdom: "Animalia", phylum: "Mollusca", class: "Cephalopoda", order: "Teuthida", family: "Loliginidae", genus: "Loligo" },
+            { name: "Snail", kingdom: "Animalia", phylum: "Mollusca", class: "Gastropoda", order: "Stylommatophora", family: "Helicidae", genus: "Helix" },
+            { name: "Clam", kingdom: "Animalia", phylum: "Mollusca", class: "Bivalvia", order: "Veneroida", family: "Veneridae", genus: "Venus" },
+            { name: "Crab", kingdom: "Animalia", phylum: "Arthropoda", class: "Malacostraca", order: "Decapoda", family: "Cancridae", genus: "Cancer" },
+            { name: "Lobster", kingdom: "Animalia", phylum: "Arthropoda", class: "Malacostraca", order: "Decapoda", family: "Nephropidae", genus: "Homarus" },
+            { name: "Shrimp", kingdom: "Animalia", phylum: "Arthropoda", class: "Malacostraca", order: "Decapoda", family: "Penaeidae", genus: "Penaeus" },
+            { name: "Butterfly", kingdom: "Animalia", phylum: "Arthropoda", class: "Insecta", order: "Lepidoptera", family: "Nymphalidae", genus: "Danaus" },
+            { name: "Bee", kingdom: "Animalia", phylum: "Arthropoda", class: "Insecta", order: "Hymenoptera", family: "Apidae", genus: "Apis" },
+            { name: "Ant", kingdom: "Animalia", phylum: "Arthropoda", class: "Insecta", order: "Hymenoptera", family: "Formicidae", genus: "Formica" },
+            { name: "Beetle", kingdom: "Animalia", phylum: "Arthropoda", class: "Insecta", order: "Coleoptera", family: "Scarabaeidae", genus: "Scarabaeus" },
+            { name: "Dragonfly", kingdom: "Animalia", phylum: "Arthropoda", class: "Insecta", order: "Odonata", family: "Libellulidae", genus: "Libellula" },
+            { name: "Grasshopper", kingdom: "Animalia", phylum: "Arthropoda", class: "Insecta", order: "Orthoptera", family: "Acrididae", genus: "Locusta" },
+            { name: "Spider", kingdom: "Animalia", phylum: "Arthropoda", class: "Arachnida", order: "Araneae", family: "Theridiidae", genus: "Latrodectus" },
+            { name: "Scorpion", kingdom: "Animalia", phylum: "Arthropoda", class: "Arachnida", order: "Scorpiones", family: "Scorpionidae", genus: "Scorpio" },
+            { name: "Jellyfish", kingdom: "Animalia", phylum: "Cnidaria", class: "Scyphozoa", order: "Semaeostomeae", family: "Ulmaridae", genus: "Aurelia" },
+            { name: "Starfish", kingdom: "Animalia", phylum: "Echinodermata", class: "Asteroidea", order: "Forcipulatida", family: "Asteriidae", genus: "Asterias" },
+            { name: "Sea Urchin", kingdom: "Animalia", phylum: "Echinodermata", class: "Echinoidea", order: "Camarodonta", family: "Strongylocentrotidae", genus: "Strongylocentrotus" },
+            { name: "Earthworm", kingdom: "Animalia", phylum: "Annelida", class: "Clitellata", order: "Opisthopora", family: "Lumbricidae", genus: "Lumbricus" }
+        ];
+
+        const taxonomyLevels = ['kingdom', 'phylum', 'class', 'order', 'family', 'genus'];
+
+        let targetAnimal = null;
+        let guessesLeft = 10;
+        let guesses = [];
+        let revealedLevels = new Set();
+        let gameOver = false;
+        let streak = parseInt(localStorage.getItem('animalGuessStreak') || '0');
+
+        const input = document.getElementById('guess-input');
+        const guessBtn = document.getElementById('guess-btn');
+        const suggestionsList = document.getElementById('suggestions');
+        const guessesListEl = document.getElementById('guesses-list');
+        const guessesLeftEl = document.getElementById('guesses-left');
+        const streakEl = document.getElementById('streak');
+        const gameOverEl = document.getElementById('game-over');
+        const gameOverTitle = document.getElementById('game-over-title');
+        const gameOverMessage = document.getElementById('game-over-message');
+        const answerReveal = document.getElementById('answer-reveal');
+        const newGameBtn = document.getElementById('new-game-btn');
+        const inputSection = document.getElementById('input-section');
+
+        function init() {
+            targetAnimal = animals[Math.floor(Math.random() * animals.length)];
+            guessesLeft = 10;
+            guesses = [];
+            revealedLevels = new Set();
+            gameOver = false;
+
+            guessesLeftEl.textContent = guessesLeft;
+            streakEl.textContent = streak;
+            guessesListEl.innerHTML = '';
+            gameOverEl.classList.add('hidden');
+            inputSection.classList.remove('hidden');
+            input.value = '';
+            input.disabled = false;
+            guessBtn.disabled = false;
+
+            // Reset taxonomy display
+            taxonomyLevels.forEach(level => {
+                const levelEl = document.getElementById(`level-${level}`);
+                const valEl = document.getElementById(`val-${level}`);
+                levelEl.classList.remove('revealed', 'match');
+                valEl.textContent = '???';
+                valEl.classList.add('hidden');
+            });
+
+            // Always reveal kingdom (all animals share it)
+            revealLevel('kingdom');
+        }
+
+        function revealLevel(level) {
+            if (revealedLevels.has(level)) return;
+            revealedLevels.add(level);
+
+            const levelEl = document.getElementById(`level-${level}`);
+            const valEl = document.getElementById(`val-${level}`);
+
+            levelEl.classList.add('revealed');
+            valEl.textContent = targetAnimal[level];
+            valEl.classList.remove('hidden');
+        }
+
+        function getMatchLevel(guessedAnimal) {
+            let matchLevel = 0;
+            for (let i = 0; i < taxonomyLevels.length; i++) {
+                const level = taxonomyLevels[i];
+                if (guessedAnimal[level] === targetAnimal[level]) {
+                    matchLevel = i + 1;
+                    revealLevel(level);
+                } else {
+                    break;
+                }
+            }
+            return matchLevel;
+        }
+
+        function getMatchText(level) {
+            if (level === 0) return "No match";
+            return `Matches ${taxonomyLevels[level - 1]}`;
+        }
+
+        function getMatchClass(level) {
+            if (level >= 5) return 'high';
+            if (level >= 3) return 'medium';
+            return 'low';
+        }
+
+        function makeGuess(animalName) {
+            if (gameOver || guessesLeft <= 0) return;
+
+            const guessedAnimal = animals.find(a => a.name.toLowerCase() === animalName.toLowerCase());
+            if (!guessedAnimal) {
+                alert('Animal not in database. Try another!');
+                return;
+            }
+
+            if (guesses.some(g => g.name.toLowerCase() === animalName.toLowerCase())) {
+                alert('You already guessed that animal!');
+                return;
+            }
+
+            guessesLeft--;
+            guessesLeftEl.textContent = guessesLeft;
+
+            const matchLevel = getMatchLevel(guessedAnimal);
+            guesses.push({ name: guessedAnimal.name, matchLevel });
+
+            // Add to guesses list
+            const guessEl = document.createElement('div');
+            guessEl.className = 'guess-item';
+            guessEl.innerHTML = `
+                <span class="guess-animal">${guessedAnimal.name}</span>
+                <span class="guess-match ${getMatchClass(matchLevel)}">${getMatchText(matchLevel)}</span>
+            `;
+            guessesListEl.insertBefore(guessEl, guessesListEl.firstChild);
+
+            // Check win
+            if (guessedAnimal.name === targetAnimal.name) {
+                endGame(true);
+                return;
+            }
+
+            // Check lose
+            if (guessesLeft <= 0) {
+                endGame(false);
+            }
+
+            input.value = '';
+            suggestionsList.classList.remove('show');
+        }
+
+        function endGame(won) {
+            gameOver = true;
+            input.disabled = true;
+            guessBtn.disabled = true;
+            inputSection.classList.add('hidden');
+
+            // Reveal all taxonomy
+            taxonomyLevels.forEach(level => revealLevel(level));
+
+            if (won) {
+                streak++;
+                localStorage.setItem('animalGuessStreak', streak);
+                streakEl.textContent = streak;
+                gameOverEl.classList.remove('lose');
+                gameOverEl.classList.add('win');
+                gameOverTitle.textContent = 'You Won!';
+                gameOverMessage.textContent = `You guessed it in ${10 - guessesLeft} ${10 - guessesLeft === 1 ? 'try' : 'tries'}!`;
+            } else {
+                streak = 0;
+                localStorage.setItem('animalGuessStreak', '0');
+                streakEl.textContent = streak;
+                gameOverEl.classList.remove('win');
+                gameOverEl.classList.add('lose');
+                gameOverTitle.textContent = 'Game Over';
+                gameOverMessage.textContent = 'You ran out of guesses!';
+            }
+
+            answerReveal.textContent = `The answer was: ${targetAnimal.name}`;
+            gameOverEl.classList.remove('hidden');
+        }
+
+        // Input handling
+        input.addEventListener('input', () => {
+            const value = input.value.toLowerCase().trim();
+            if (value.length < 1) {
+                suggestionsList.classList.remove('show');
+                return;
+            }
+
+            const matches = animals
+                .filter(a => a.name.toLowerCase().includes(value))
+                .filter(a => !guesses.some(g => g.name.toLowerCase() === a.name.toLowerCase()))
+                .slice(0, 5);
+
+            if (matches.length === 0) {
+                suggestionsList.classList.remove('show');
+                return;
+            }
+
+            suggestionsList.innerHTML = matches
+                .map(a => `<div class="suggestion-item" data-name="${a.name}">${a.name}</div>`)
+                .join('');
+            suggestionsList.classList.add('show');
+        });
+
+        suggestionsList.addEventListener('click', (e) => {
+            if (e.target.classList.contains('suggestion-item')) {
+                makeGuess(e.target.dataset.name);
+            }
+        });
+
+        guessBtn.addEventListener('click', () => {
+            if (input.value.trim()) {
+                makeGuess(input.value.trim());
+            }
+        });
+
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && input.value.trim()) {
+                makeGuess(input.value.trim());
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.suggestions')) {
+                suggestionsList.classList.remove('show');
+            }
+        });
+
+        newGameBtn.addEventListener('click', init);
+
+        // Start game
+        init();
+    </script>
+</body>
+</html>
